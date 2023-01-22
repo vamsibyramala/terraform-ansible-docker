@@ -38,10 +38,11 @@ resource "aws_security_group" "tomcat" {
   }
 }
 
-resource "aws_instance" "nginx" {
+resource "aws_instance" "tomcat" {
   ami                         = "ami-0b5eea76982371e91"
   subnet_id                   = local.subnet_id
   instance_type               = "t2.micro"
+  tags = { Name = "terraform-docker" }
   associate_public_ip_address = true
   security_groups             = [aws_security_group.tomcat.id]
   key_name                    = local.key_name
