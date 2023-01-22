@@ -1,0 +1,56 @@
+---
+ - hosts: all
+   user: ec2-user
+   become: yes
+   tasks:
+   - name: Install git, Maven
+     yum:
+       name: "{{ packages }}"
+       state: present
+       update_cache: yes
+     vars:
+       packages:
+         - maven
+         - git
+   - name: Clone a github repository
+     git:
+       repo: https://github.com/vamsibyramla/sample.git
+       dest: /test
+       clone: yes
+       update: yes
+   - name: Install docker
+     yum:
+       name: docker
+       state: present
+   - name: start docker
+     service:
+       name: docker
+       state: started
+       enabled: yes
+   - name: Pulling from github repository
+     git:
+       repo: https://github.com/vamsibyramla/sample.git
+       dest: /test
+       update: yes
+   - name: Running mvn clean and install
+     shell: mvn -f /test/pom.xml clean install
+     register: mvn_result
+
+   - name: stop current running container
+     command: docker stop test
+     ignore_errors: yes
+
+   - name: remove stopped docker container
+     command: docker rm test
+     ignore_errors: yes
+
+   - name: remove current docker image
+     command: docker rmi test
+     ignore_errors: yes
+
+   - name: build docker image
+     command: docker build -t test /test
+     ignore_errors: yes
+
+   - name: docker run container
+     command: docker run --name test -d -p 8080:8080 test
